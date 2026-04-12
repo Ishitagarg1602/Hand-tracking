@@ -1,0 +1,5 @@
+train: dataset/images/train
+val: dataset/images/val
+
+nc: 5
+names: ['fist', 'open_palm', 'thumbs_up', 'swipe_right', 'swipe_left']

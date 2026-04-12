@@ -1,2 +1,5 @@
-Fist
-Open Palm
+fist
+Open palm
+Swipe left
+Swipe Right
+Thumbs Up
