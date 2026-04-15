@@ -50,10 +50,10 @@ python main.py
 ```
 Stand in front of the camera and perform the gestures:
 - 👍 **Thumbs Up**: Increases volume
-- ✋ **Open Palm**: Pauses video (Spacebar)
-- ✊ **Fist**: Plays video (Spacebar)
-- 👉 **Swipe Right**: Next slide (Right arrow key)
-- 👈 **Swipe Left**: Previous slide (Left arrow key)
+- ✋ **Open Palm**: Take Screenshot  
+- ✊ **Fist**:  scrolls 
+- 👉 **Swipe Right**:  Brightness increase 
+- 👈 **Swipe Left**:Brightness decrease    
 
 ---
 *Note: A 2-second cooldown is implemented to prevent the program from spamming keystrokes when a gesture is held on screen.*

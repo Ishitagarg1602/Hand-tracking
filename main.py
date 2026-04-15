@@ -2,13 +2,21 @@ import cv2
 import pyautogui
 import time
 from ultralytics import YOLO
+import screen_brightness_control as sbc
 
 # Configuration
 MODEL_PATH = "best.pt" # Replace with your trained YOLOv8 model file
-CONFIDENCE_THRESHOLD = 0.70 # Minimum confidence score to execute action
+CONFIDENCE_THRESHOLD = 0.50 # Minimum confidence score to execute action
 
-# Time cooldown between actions (in seconds) to prevent command spamming!
-COOLDOWN_TIME = 2.0 
+# Specific Cooldown times per action (in seconds)
+COOLDOWNS = {
+    'open_palm': 2.0,     # Screenshot needs long cooldown
+    'thumbs_up': 0.3,     # Volume up
+    'fist': 0.1,          # Scrolling should be very fast/seamless
+    'swipe_right': 0.3,   # Brightness
+    'swipe_left': 0.3     # Brightness
+}
+
 last_action_time = 0
 
 print("Initializing YOLO Model...")
@@ -28,31 +36,44 @@ def execute_command(gesture_name):
     global last_action_time
     
     current_time = time.time()
-    if current_time - last_action_time < COOLDOWN_TIME:
-        # Avoid spamming actions
+    
+    # Get the specific cooldown for this gesture (default to 1.0s just in case)
+    cooldown = COOLDOWNS.get(gesture_name, 1.0)
+    
+    if current_time - last_action_time < cooldown:
+        # Avoid spamming
         return
 
     print(f"Executing action for gesture: {gesture_name}")
     
-    if gesture_name == 'thumbs_up':
-        # Increase Volume
-        pyautogui.press('volumeup')
-    
-    elif gesture_name == 'open_palm':
-        # Pause Video
-        pyautogui.press('space')
-    
-    elif gesture_name == 'fist':
-        # Play Video 
-        pyautogui.press('space')
+    try:
+        if gesture_name == 'thumbs_up':
+            # Increase Volume (loop manually to ensure OS catches it)
+            for _ in range(5):
+                pyautogui.press('volumeup')
+                time.sleep(0.01)
         
-    elif gesture_name == 'swipe_right':
-        # Next Slide
-        pyautogui.press('right')
-    
-    elif gesture_name == 'swipe_left':
-        # Previous Slide
-        pyautogui.press('left')
+        elif gesture_name == 'open_palm':
+            # Take Screenshot
+            filename = f"screenshot_{int(time.time())}.png"
+            pyautogui.screenshot(filename)
+            print(f"Screenshot saved to {filename}")
+        
+        elif gesture_name == 'fist':
+            # Scroll Down smoothly
+            pyautogui.scroll(-200)
+            
+        elif gesture_name == 'swipe_right':
+            # Increase Brightness
+            current_brightness = sbc.get_brightness(display=0)[0]
+            sbc.set_brightness(min(100, current_brightness + 10), display=0)
+        
+        elif gesture_name == 'swipe_left':
+            # Decrease Brightness
+            current_brightness = sbc.get_brightness(display=0)[0]
+            sbc.set_brightness(max(0, current_brightness - 10), display=0)
+    except Exception as e:
+        print(f"Error executing command: {e}")
         
     # Update time of last action
     last_action_time = current_time
@@ -76,6 +97,8 @@ while True:
     # If using an Object Detection model (predicts bounding boxes + classes)
     detected_gesture = None
     highest_conf = 0.0
+    best_box = None
+    best_class_name = None
     
     for result in results:
         boxes = result.boxes
@@ -88,12 +111,15 @@ while True:
             if conf > CONFIDENCE_THRESHOLD and conf > highest_conf:
                 highest_conf = conf
                 detected_gesture = class_name
-                
-            # Draw bounding box for visualization
-            x1, y1, x2, y2 = map(int, box.xyxy[0])
-            cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
-            cv2.putText(frame, f"{class_name} {conf:.2f}", (x1, y1 - 10), 
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+                best_box = list(map(int, box.xyxy[0]))
+                best_class_name = class_name
+
+    # Only draw bounding box for the highest confidence visualization
+    if best_box is not None:
+        x1, y1, x2, y2 = best_box
+        cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+        cv2.putText(frame, f"{best_class_name} {highest_conf:.2f}", (x1, y1 - 10), 
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
 
     # Note: If your YOLO model is purely an Image Classification model (predicts classes directly per frame without boxes), 
     # instead of the box iteration above, you would use:
@@ -111,8 +137,9 @@ while True:
         
     # Show Cooldown Status on Screen
     time_since = time.time() - last_action_time
-    if time_since < COOLDOWN_TIME:
-        cv2.putText(frame, "COOLDOWN...", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+    # using a simple visual threshold of 0.5 for the visual READY indicator
+    if time_since < 0.5:
+        cv2.putText(frame, "ACTION ACTIVE", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
     else:
         cv2.putText(frame, "READY", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
         
