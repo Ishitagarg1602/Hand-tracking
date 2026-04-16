@@ -6,7 +6,7 @@ import screen_brightness_control as sbc
 
 # Configuration
 MODEL_PATH = "best.pt" # Replace with your trained YOLOv8 model file
-CONFIDENCE_THRESHOLD = 0.50 # Minimum confidence score to execute action
+CONFIDENCE_THRESHOLD = 0.60 # Increased to 0.60 to reduce background false positives
 
 # Specific Cooldown times per action (in seconds)
 COOLDOWNS = {
@@ -133,7 +133,9 @@ while True:
 
     # Check and trigger the gesture action
     if detected_gesture is not None:
-        execute_command(detected_gesture)
+        # Normalize the detected gesture name to match the logic (e.g. 'Thumbs Up' -> 'thumbs_up')
+        normalized_gesture = detected_gesture.lower().replace(' ', '_')
+        execute_command(normalized_gesture)
         
     # Show Cooldown Status on Screen
     time_since = time.time() - last_action_time
