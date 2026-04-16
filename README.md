@@ -49,11 +49,11 @@ Now the fun part! You can run your system:
 python main.py
 ```
 Stand in front of the camera and perform the gestures:
-- 👍 **Thumbs Up**: Increases volume
+- 👍 **Thumbs Up**: Decrease Brightness
 - ✋ **Open Palm**: Take Screenshot  
 - ✊ **Fist**:  scrolls 
 - 👉 **Swipe Right**:  Brightness increase 
-- 👈 **Swipe Left**:Brightness decrease    
+- 👈 **Swipe Left**:Brightness increase    
 
 ---
 *Note: A 2-second cooldown is implemented to prevent the program from spamming keystrokes when a gesture is held on screen.*
